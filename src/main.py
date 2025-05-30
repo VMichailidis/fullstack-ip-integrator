@@ -1,3 +1,4 @@
+# TODO Generate parametrized .sv files from regtool.py
 from os import system as sys
 import os
 import subprocess

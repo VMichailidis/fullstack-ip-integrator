@@ -1,13 +1,23 @@
 [project]
-name = "fullstack-ip"
+name = "fullstack-ip-integrator"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-                "hjson",
-                "mistletoe",
-                "mako",
-                # "setuptools"
-               ]
-                
+  "hjson",
+  "mistletoe",
+  "pyelftools",
+  "artifactory",
+  "twisted",
+  "prettytable",
+  "sqlalchemy",
+  "openpyxl==2.6.4",
+  "xlsxwriter",
+  "pyyaml",
+  "numpy",
+  "configparser",
+  "pyvcd",
+  "sphinx",
+  "mako"
+]
