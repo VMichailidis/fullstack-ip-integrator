@@ -1,0 +1,62 @@
+# Download the correct version of pulp-platform to apply the patches.
+
+set shell := ["bash", "-uc"]
+input-dir := "./dummy-inputs"
+repo-path := "pulp-platform"
+ip-name := "wide_alu"
+pulp-platform := "./pulp-platform"
+branch-name := "develop"
+reg-definition := "path-to-hjson"
+
+default:
+    @just --list
+
+add-ip ip-name: branch bender-init patch-pulp-soc patch-pulpissimo
+    @echo "IP added to pulpissimo"
+
+branch: (_branch "{{justfile_directory()}}/{{repo-path}}/pulpissimo") (_branch "{{justfile_directory()}}/{{repo-path}}/pulp-runtime")
+    
+_branch sub-repo:
+    #!/usr/bin/env bash
+    cd {{sub-repo}}
+    if ! [[ $(git branch --list "{{branch-name}}") ]]; then
+        echo "In repo {{sub-repo}}, {{branch-name}} branch does not exist"
+        cd {{justfile_directory()}}/{{repo-path}}/{{sub-repo}}
+        git branch {{branch-name}} && git checkout {{branch-name}}
+    else
+        echo "In repo {{sub-repo}}, {{branch-name}} branch already exists"
+    fi
+
+bender-init:
+    #!/usr/bin/env bash
+    cd {{justfile_directory()}}/{{repo-path}}/pulpissimo
+    cd pulpissimo/working_dir/pulp_soc
+    ./bender update
+    ./bender checkout
+    ./bender clone pulp_soc
+   
+gen-bender:
+    @echo "creating bender definitions"
+# Generate Bender.yml for the new IP
+# Checkout pulp_soc
+# Add path to ip to pulpissimo/working_dir/pulp_soc/Bender.yml
+
+gen-top: # steps 4-10
+    @echo "generating top module definition"
+    @echo "generating AXI wrapper"
+    # Generate a wrapper named ip-name_top.sv that plugs to the axi bus of pulpissimo
+
+patch-pulp-soc:
+    uv run {{justfile_directory()}} src/patch.py 
+    @echo "updating Bender.yml" # step 11
+    # -- workdir/pulp_soc/rtl/pulp_soc/pulp_soc.sv
+    @echo "Instantiating ip in pulp_soc" # step 12 2:38:40
+    # -- workdir/pulp_soc/rtl/pulp_soc/soc_interconnect_wrap.sv step 13, step 14
+    @echo "Patching soc interconnect wrap"
+    
+patch-pulpissimo:
+    # -- pulpissimo/rtl/includes/soc_mem_map
+    # Patch pulpissimo to memory map the ip registers step 14
+    @echo "Patching pulpissimo"
+    
+

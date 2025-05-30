@@ -1,0 +1,7 @@
+[keys.normal."+"]
+m = """
+:run-shell-command 
+date now | into string | $in + \"\n\" 
+| $"(ansi magenta_bold)($in)(ansi reset)" o> .helix/test_run.out;
+uv run src/main.py o+e> .helix/test_run.out
+"""

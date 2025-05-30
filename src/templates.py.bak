@@ -1,0 +1,103 @@
+## This file defines the strings which should be converted to patches and applied to the sourcecode of the pulp_soc, pulpissimo and pulp-runtime
+## Each definition is a dictionary with the following fields
+
+# repo: the repo this module belongs to
+# path: the path of the file that this patch will be applied to
+# string: the parametrized string that defines the patch
+# type: the type of the patch, which can take the following types:
+####### "Anywhere": the patch can be applied anywhere,
+####### "Append": the patch is added at the end of the file
+####### "Somewhere": the patch needs to be applied at a specific line described with the optional field "line"
+####### "Replace": Replaces line
+####### "Inside": the patch is appending an element to some list that starts at "line", is surrounded by the character "delim" and separated by the character "sep".
+
+# every patch described in this file is a lambda that returns the correct patch dictionary
+patches = [
+lambda module_name:{
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/pulp_soc.sv",
+    "string": f'''
+    {module_name}_top #(
+        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+        .AXI_ID_WIDTH(AXI_ID_OUT_WIDTH),
+        .AXI_USER_WIDTH(AXI_USER_WIDTH)
+        ) i_wide_alu (
+        .clk_i(s_soc_clk),
+        .rst_ni(s_soc_rstn),
+        .test_mode_i(dft_test_mode_i),
+        .axi_slave(s_{module_name}_bus)
+    );
+    ''', 
+    "type": "Anywhere" 
+},
+
+lambda module_name: {
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/pulp_soc.sv",
+    "string": f'''
+    AXI_BUS #(.AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+              .AXI_DATA_WIDTH(AXI_DATA_OUT_WIDTH),
+              .AXI_ID_WIDTH(AXI_ID_OUT_WIDTH),
+              .AXI_USER_WIDTH(AXI_USER_WIDTH)
+    ) s_{module_name}_bus();
+    ''',
+    "type": "Anywhere"
+},
+
+lambda module_name: {
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/pulp_soc.sv",
+    "string": f'''
+        .{module_name}_slave        ( s_{module_name}_bus      )   
+    ''',
+    "type": "Inside",
+    "line": 848,
+    "delim": "(",
+    "sep": ",",
+    
+},
+lambda module_name: {
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/soc_interconnect_wrap.sv",
+    "string": f'''
+       AXI_BUS.Master           wide_alu_slave //connects to alu
+    '''
+    "type": "Inside",
+    "line": 44,
+    "delim": "(",
+    "sep": "," 
+},
+lambda module_name: {
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/soc_interconnect_wrap.sv",
+    "string": f'''
+    localparam NR_RULES_AXI_CROSSBAR = 3;
+    '''
+    "type": "Replace",
+    "line": 113
+},
+lambda module_name: {
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/soc_interconnect_wrap.sv",
+    "string": f'''
+              ) axi_slaves[3]();
+
+    '''
+    "type": "Replace",
+    "line": 179
+},
+lambda module_name: {
+    "repo": "pulp_soc",
+    "path": "rtl/pulp_soc/soc_interconnect_wrap.sv",
+    "string": f'''
+       '\{ idx: 2, start_addr: `SOC_MEM_MAP_{module_name.capitalize()}_START_ADDR, end_addr: `SOC_MEM_MAP_{module_name.capitalize()}_END_ADDR\}\}\;
+    ''',
+    "type": "Inside",
+    "line": 114,
+    "delim": "{",
+    "sep": ","
+    
+}
+
+
+]
