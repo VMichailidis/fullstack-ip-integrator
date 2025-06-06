@@ -1,5 +1,7 @@
+# TODO Make patches great again
 # TODO Generate parametrized .sv files from regtool.py
 # TODO calculate relative path between module and working_dir/pulp_soc
+# NOTE the output is a pulp-platform directory where pulpissimo and pulp-runtime, at least, are git repos
 from os import system as sys
 import os
 import subprocess

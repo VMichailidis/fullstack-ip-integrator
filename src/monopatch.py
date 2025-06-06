@@ -18,33 +18,28 @@ def patch(name, path):
         "pulp_soc": f"""
 --- a/Bender.yml
 +++ b/Bender.yml
-@@ -50,2 +50,3 @@ dependencies:
-   register_interface:     {{ git: "https://github.com/pulp-platform/register_interface.git", version: 0.3.1 }}
+@@ -34,2 +34,3 @@ dependencies:
+   register_interface:     {{ git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.1 }}
 +  {name}:                   {{ path: "{path}"}}
 
 --- a/rtl/pulp_soc/pulp_soc.sv
 +++ b/rtl/pulp_soc/pulp_soc.sv
-@@ -406,6 +406,11 @@ module pulp_soc import dm::*; #(
-         assign base_addr_int = 4'b0001; //FIXME attach this signal somewhere in the soc peripherals --> IGOR
-     `endif
- 
+@@ -410,3 +410,8 @@
+   ) s_data_in_bus ();
+
 +    AXI_BUS #(.AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
 +              .AXI_DATA_WIDTH(AXI_DATA_OUT_WIDTH),
 +              .AXI_ID_WIDTH(AXI_ID_OUT_WIDTH),
 +              .AXI_USER_WIDTH(AXI_USER_WIDTH)
 +    ) s_{name}_bus();
  
- 
-     logic s_rstn_cluster_sync_soc;
-@@ -855,9 +860,19 @@ module pulp_soc import dm::*; #(
-         .apb_peripheral_bus    ( s_apb_periph_bus    ),
-         .l2_interleaved_slaves ( s_mem_l2_bus        ),
-         .l2_private_slaves     ( s_mem_l2_pri_bus    ),
--        .boot_rom_slave        ( s_mem_rom_bus       )
-+        .boot_rom_slave        ( s_mem_rom_bus       ),
-+        .{name}_slave      ( s_{name}_bus    )
-         );
--
+@@ -807,8 +807,19 @@
+     .l2_interleaved_slaves   ( s_mem_l2_bus        ),
+     .l2_private_slaves       ( s_mem_l2_pri_bus    ),
+-    .boot_rom_slave          ( s_mem_rom_bus       )
++    .boot_rom_slave          ( s_mem_rom_bus       ),
++    .{name}_slave      ( s_{name}_bus    )
+   );
 +    {name}_top #(
 +        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
 +        .AXI_ID_WIDTH(AXI_ID_OUT_WIDTH),
@@ -55,80 +50,13 @@ def patch(name, path):
 +        .test_mode_i(dft_test_mode_i),
 +        .axi_slave(s_{name}_bus)
 +    );
-     /* Debug Subsystem */
- 
-     dmi_jtag #(
-@@ -937,9 +952,8 @@ module pulp_soc import dm::*; #(
-     );
-     assign s_lint_riscv_jtag_bus.wen = ~lint_riscv_jtag_bus_master_we;
- 
--    jtag_tap_top  #(
--        .IDCODE_VALUE             ( `PULP_JTAG_IDCODE  )
--    ) jtag_tap_top_i (
-+    jtag_tap_top jtag_tap_top_i
-+    (
-         .tck_i                    ( jtag_tck_i         ),
-         .trst_ni                  ( jtag_trst_ni       ),
-         .tms_i                    ( jtag_tms_i         ),
---- a/rtl/pulp_soc/soc_interconnect.sv
-+++ b/rtl/pulp_soc/soc_interconnect.sv
-@@ -89,11 +89,12 @@ module soc_interconnect
-     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
- 
--    XBAR_TCDM_BUS l2_demux_slaves[NR_MASTER_PORTS*3]();
-     for (genvar i = 0; i < NR_MASTER_PORTS; i++) begin : gen_l2_demux
--        `TCDM_ASSIGN_INTF(l2_demux_2_axi_bridge[i], l2_demux_slaves[3*i + 0]);
--        `TCDM_ASSIGN_INTF(l2_demux_2_contiguous_xbar[i], l2_demux_slaves[3*i + 1]);
--        `TCDM_ASSIGN_INTF(l2_demux_2_interleaved_xbar[i], l2_demux_slaves[3*i + 2]);
-+        XBAR_TCDM_BUS demux_slaves[3]();
-+
-+        `TCDM_ASSIGN_INTF(l2_demux_2_axi_bridge[i], demux_slaves[0]);
-+        `TCDM_ASSIGN_INTF(l2_demux_2_contiguous_xbar[i], demux_slaves[1]);
-+        `TCDM_ASSIGN_INTF(l2_demux_2_interleaved_xbar[i], demux_slaves[2]);
- 
- 
-         tcdm_demux #(
-@@ -105,7 +106,7 @@ module soc_interconnect
-                                   .test_en_i,
-                                   .addr_map_rules(addr_space_l2_demux),
-                                   .master_port(master_ports[i]),
--                                  .slave_ports(l2_demux_slaves[3*i:3*(i+1)-1])
-+                                  .slave_ports(demux_slaves)
-                                   );
-     end
- 
-@@ -116,13 +117,14 @@ module soc_interconnect
-     // interleaved memory region.                                                                               //
-     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-     XBAR_TCDM_BUS master_ports_interleaved_only_checked[NR_MASTER_PORTS_INTERLEAVED_ONLY]();
--    XBAR_TCDM_BUS err_demux_slaves[NR_MASTER_PORTS_INTERLEAVED_ONLY*2]();
-     for (genvar i = 0; i < NR_MASTER_PORTS_INTERLEAVED_ONLY; i++) begin : gen_interleaved_only_err_checkers
--        `TCDM_ASSIGN_INTF(master_ports_interleaved_only_checked[i], err_demux_slaves[2*i + 1]);
-+        XBAR_TCDM_BUS err_demux_slaves[2]();
-+
-+        `TCDM_ASSIGN_INTF(master_ports_interleaved_only_checked[i], err_demux_slaves[1]);
-         // Workaround for genus (doesn't seem to like references interface
-         // arrays in port connections so we assign it to a scalar interface instance)
-         XBAR_TCDM_BUS err_slave();
--        `TCDM_ASSIGN_INTF(err_slave, err_demux_slaves[2*i + 0]);
-+        `TCDM_ASSIGN_INTF(err_slave, err_demux_slaves[0]);
- 
-         //The tcdm demux will route all transaction that do not match any addr rule to port 0 (which we connect to an
-         //error slave)
-@@ -135,7 +137,7 @@ module soc_interconnect
-           .test_en_i,
-           .addr_map_rules ( addr_space_interleaved           ),
-           .master_port    ( master_ports_interleaved_only[i] ),
--          .slave_ports    ( err_demux_slaves[2*i:2*(i+1)-1]  )
-+          .slave_ports    ( err_demux_slaves                 )
-         );
-         tcdm_error_slave #(
-           .ERROR_RESPONSE(32'hBADACCE5)
+
+   /* Debug Subsystem */
+
+   dmi_jtag #(
 --- a/rtl/pulp_soc/soc_interconnect_wrap.sv
 +++ b/rtl/pulp_soc/soc_interconnect_wrap.sv
-@@ -56,7 +56,8 @@ module soc_interconnect_wrap
-        APB_BUS.Master           apb_peripheral_bus, // Connects to all the SoC Peripherals
+@@ -57,7 +57,8 @@ module soc_interconnect_wrap
         XBAR_TCDM_BUS.Master     l2_interleaved_slaves[NR_L2_PORTS], // Connects to the interleaved memory banks
         XBAR_TCDM_BUS.Master     l2_private_slaves[2], // Connects to core-private memory banks
 -       XBAR_TCDM_BUS.Master     boot_rom_slave //Connects to the bootrom
@@ -137,7 +65,7 @@ def patch(name, path):
       );
  
      //**Do not change these values unles you verified that all downstream IPs are properly parametrized and support it**
-@@ -109,11 +110,11 @@ module soc_interconnect_wrap
+@@ -122,11 +122,11 @@
          '{{ idx: 1 , start_addr: `SOC_MEM_MAP_PRIVATE_BANK1_START_ADDR , end_addr: `SOC_MEM_MAP_PRIVATE_BANK1_END_ADDR}} ,
          '{{ idx: 2 , start_addr: `SOC_MEM_MAP_BOOT_ROM_START_ADDR      , end_addr: `SOC_MEM_MAP_BOOT_ROM_END_ADDR}}}};
  
@@ -148,7 +76,7 @@ def patch(name, path):
 -       '{{ idx: 1, start_addr: `SOC_MEM_MAP_PERIPHERALS_START_ADDR, end_addr: `SOC_MEM_MAP_PERIPHERALS_END_ADDR}}}};
 -
 +       '{{ idx: 1, start_addr: `SOC_MEM_MAP_PERIPHERALS_START_ADDR, end_addr: `SOC_MEM_MAP_PERIPHERALS_END_ADDR}},
-+       '{{ idx: 2, start_addr: `SOC_MEM_MAP_{name.upper()}_START_ADDR, end_addr: `SOC_MEM_MAP_{name.upper()}_END_ADDR}};
++       '{{ idx: 2, start_addr: `SOC_MEM_MAP_{name.upper()}_START_ADDR, end_addr: `SOC_MEM_MAP_{name.upper()}_END_ADDR}}}};
      //For legacy reasons, the fc_data port can alias the address prefix 0x000 to 0x1c0. E.g. an access to 0x00001234 is
      //mapped to 0x1c001234. The following lines perform this remapping.
      XBAR_TCDM_BUS tcdm_fc_data_addr_remapped();
