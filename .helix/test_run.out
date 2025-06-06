@@ -1,0 +1,29 @@
+Switched to branch 'develop'
+D	dummy-inputs/test/wide_alu_reg_pkg.sv
+D	dummy-inputs/test/wide_alu_reg_top.sv
+M	src/main.py
+D	wide_alu.hjson
+/home/vlsilab/scratchpad/fullstack-ip-integrator/lowrisc_opentitan/util/reggen/gen_dv.py:13: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_filename
+WARNING: OP_A multireg count is integer. It is recommended to use Parameter.
+WARNING: OP_B multireg count is integer. It is recommended to use Parameter.
+WARNING: RESULT multireg count is integer. It is recommended to use Parameter.
+WARNING: CTRL1: hwqe not provided but must be true for hwext not read-only register. Setting it to true.
+WARNING: CTRL2: hwqe not provided but must be true for hwext not read-only register. Setting it to true.
+error: patch failed: pulp-platform/pulpissimo/working_dir/pulp_soc/Bender.yml:50
+error: pulp-platform/pulpissimo/working_dir/pulp_soc/Bender.yml: patch does not apply
+error: patch failed: pulp-platform/pulpissimo/working_dir/pulp_soc/rtl/pulp_soc/pulp_soc.sv:406
+error: pulp-platform/pulpissimo/working_dir/pulp_soc/rtl/pulp_soc/pulp_soc.sv: patch does not apply
+error: patch failed: pulp-platform/pulpissimo/working_dir/pulp_soc/rtl/pulp_soc/soc_interconnect.sv:89
+error: pulp-platform/pulpissimo/working_dir/pulp_soc/rtl/pulp_soc/soc_interconnect.sv: patch does not apply
+error: patch failed: pulp-platform/pulpissimo/working_dir/pulp_soc/rtl/pulp_soc/soc_interconnect_wrap.sv:56
+error: pulp-platform/pulpissimo/working_dir/pulp_soc/rtl/pulp_soc/soc_interconnect_wrap.sv: patch does not apply
+error: patch failed: pulp-platform/pulp-runtime/include/archi/chips/pulpissimo/memory_map.h:77
+error: pulp-platform/pulp-runtime/include/archi/chips/pulpissimo/memory_map.h: patch does not apply
+error: patch failed: pulp-platform/pulp-runtime/include/pulp.h:27
+error: pulp-platform/pulp-runtime/include/pulp.h: patch does not apply
+error: pulp-platform/pulp-runtime/rules/pulpos/targets/pulpissimo.mk: No such file or directory
+branch develop already exists
+Initializing bender project
+applying patch
+applying patch

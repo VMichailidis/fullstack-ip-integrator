@@ -1,4 +1,5 @@
 # TODO Generate parametrized .sv files from regtool.py
+# TODO calculate relative path between module and working_dir/pulp_soc
 from os import system as sys
 import os
 import subprocess
@@ -6,9 +7,9 @@ import subprocess
 # from patch import patch_gen
 import monopatch
 
-path = "pulp-platform"  # the path of the pulp-platform directory
+path = "../pulp-platform.out"  # the path of the pulp-platform directory
 branch_name = "develop"
-module_path = "./"
+module_path = "../wide_alu.in"
 
 
 def main():
